@@ -86,6 +86,9 @@ where
 }
 
 fn process(value: &Value, route: &mut PointerMap, target: &mut ValueMap) {
+    if route.len() == 0 {
+        route.push(format!("root"));
+    }
     match value {
         Value::Null => {
             target.insert(route.concat(), Value::Null);
@@ -100,16 +103,25 @@ fn process(value: &Value, route: &mut PointerMap, target: &mut ValueMap) {
             target.insert(route.concat(), Value::String(s.clone()));
         }
         Value::Array(arr) => {
-            target.insert(route.concat(), json!([]));
+            // target.insert(route.concat(), json!([]));
             arr.iter().enumerate().for_each(|(idx, val)| {
-                route.push(format!("/{}", idx));
+                if route.len() == 0 {
+                    route.push(format!("root.{}", idx));
+                } else {
+                    route.push(format!(".{}", idx));
+                }
                 process(val, route, target);
             });
         }
         Value::Object(obj) => {
-            target.insert(route.concat(), json!({}));
+            // target.insert(route.concat(), json!({}));
             for (key, val) in obj {
-                route.push(format!("/{}", escape(key.as_str())));
+                if route.len() == 0 {
+                    route.push(format!("root.{}", escape(key.as_str())));
+                } else {
+                    route.push(format!(".{}", escape(key.as_str())));
+                }
+                // route.push(format!("/{}", escape(key.as_str())));
                 process(val, route, target);
             }
         }
@@ -135,7 +147,7 @@ mod test {
         let result = from_str("{ \"one\": 1 }").unwrap();
 
         assert!(result.is_object());
-        assert!(result.as_object().unwrap().len() == 2);
+        assert!(result.as_object().unwrap().len() == 1);
     }
 
     #[test]
@@ -156,12 +168,12 @@ mod test {
         );
 
         let actual = from_json(&value);
-
+        println!("{:?}", actual);
         assert!(actual.is_object());
 
-        assert!(actual.get("/m~0n").unwrap().eq(&json!(8)));
-        assert!(actual.get("/a~1b").unwrap().eq(&json!(1)));
-        assert!(actual.get("/ ").unwrap().eq(&json!(7)));
+        assert!(actual.get("root.m~0n").unwrap().eq(&json!(8)));
+        assert!(actual.get("root.a~1b").unwrap().eq(&json!(1)));
+        assert!(actual.get("root. ").unwrap().eq(&json!(7)));
     }
 
     #[test]
@@ -169,10 +181,10 @@ mod test {
         let value = json!([true, 42]);
 
         let actual = from(&value).unwrap();
-
-        assert!(actual.get("").unwrap().eq(&json!([])));
-        assert!(actual.get("/0").unwrap().eq(&json!(true)));
-        assert!(actual.get("/1").unwrap().eq(&json!(42)));
+        println!("{:?}", actual);
+        // assert!(actual.get("").unwrap().eq(&json!([])));
+        assert!(actual.get("root.0").unwrap().eq(&json!(true)));
+        assert!(actual.get("root.1").unwrap().eq(&json!(42)));
     }
 
     #[test]
@@ -190,7 +202,7 @@ mod test {
         );
 
         let result = from_json(&value);
-
+        println!("{:?}", result);
         assert!(result.is_object());
     }
 
@@ -199,12 +211,12 @@ mod test {
         let value = json!({ "name": null });
 
         let result = from_json(&value);
-
+        println!("{:?}", result);
         assert!(result.is_object());
         assert!(result
             .as_object()
             .unwrap()
-            .get("/name")
+            .get("root.name")
             .unwrap()
             .eq(&json!(Value::Null)));
     }
@@ -224,7 +236,7 @@ mod test {
         );
 
         let result = from_json(&value);
-
+        println!("{:?}", result);
         assert!(result.is_object());
     }
 
@@ -233,7 +245,7 @@ mod test {
         let value = json!(42);
 
         let result = from_json(&value);
-
+        println!("{:?}", result);
         assert!(result.is_object());
     }
 

@@ -26,14 +26,11 @@ let actual = jsonpointer_flatten::from_json(&value);
 Outputs
 ```json
 {
-  "": {},
-  "/address": {},
-  "/address/country": "US",
-  "/address/zip": "00000",
-  "/age": 24,
-  "/name": "John Smith",
-  "/phones": [],
-  "/phones/0": "123",
-  "/phones/1": "456"
+  "root.address.country": "US",
+  "root.address.zip": "00000",
+  "root.age": 24,
+  "root.name": "John Smith",
+  "root.phones.0": "123",
+  "root.phones.1": "456"
 }
 ```
